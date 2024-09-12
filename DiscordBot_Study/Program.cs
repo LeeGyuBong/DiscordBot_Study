@@ -1,4 +1,4 @@
-﻿using Discord;
+﻿using DiscordBot;
 
 namespace Program
 {
@@ -6,6 +6,7 @@ namespace Program
     {
         static void Main(string[] args)
         {
+            new Bot().BotMain().GetAwaiter().GetResult();
         }
     }
 }
