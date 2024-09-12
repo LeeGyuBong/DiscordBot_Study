@@ -2,54 +2,61 @@
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System.Reflection;
 
 namespace DiscordBot
 {
-    public struct BotConfig
-    {
-        public string Token { get; set; }
-    }
-
     class Bot
     {
-        private DiscordSocketClient? _client; // 봇 클라이언트
-        private InteractionService? _slashCommands;
-        private BotConfig _botConfig;
+        private DiscordSocketClient _client; // 봇 클라이언트
+
+        private static IConfiguration _configuration;
+        private static IServiceProvider _services;
+
+        private static readonly DiscordSocketConfig _discordSocketConfig = new()
+        {
+            LogLevel = LogSeverity.Verbose,
+            GatewayIntents = GatewayIntents.MessageContent
+        };
+
+        private static readonly InteractionServiceConfig _interactionServiceConfig = new()
+        {
+            LogLevel = LogSeverity.Verbose
+        };
 
         public async Task BotMain()
         {
-            var botConfigJson = File.ReadAllText("../Config/Config.json");
-            if (botConfigJson == null)
-                return;
+            // Discord Config 로드
+            _configuration = new ConfigurationBuilder().
+                SetBasePath(AppContext.BaseDirectory).
+                AddJsonFile("Config.json").
+                Build();
 
-            _botConfig = JsonConvert.DeserializeObject<BotConfig>(botConfigJson);
+            _services = new ServiceCollection()
+                .AddSingleton(_configuration)
+                .AddSingleton(_discordSocketConfig)
+                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(), _interactionServiceConfig))
+                .AddSingleton<InteractionHandler>()
+                .BuildServiceProvider();
 
-            _client = new DiscordSocketClient(new DiscordSocketConfig()
-            {
-                LogLevel = LogSeverity.Verbose,
-                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent
-            });
-            _slashCommands = new InteractionService(_client.Rest, new InteractionServiceConfig()
-            {
-                LogLevel = LogSeverity.Verbose
-            });
+            _client = _services.GetRequiredService<DiscordSocketClient>();
+            _client.Log += LogAsync;
 
-            _client.Log += OnClientLogReceived;
-            _slashCommands.Log += OnClientLogReceived;
+            await _services.GetRequiredService<InteractionHandler>().InitializeAsync();
 
-            await _client.LoginAsync(TokenType.Bot, _botConfig.Token);
+            await _client.LoginAsync(TokenType.Bot, _configuration["Token"]);
             await _client.StartAsync();
-
-            await _slashCommands.AddModulesAsync(Assembly.GetEntryAssembly(), null);  //봇에 명령어 모듈 등록
 
             await Task.Delay(Timeout.Infinite);
         }
 
-        private Task OnClientLogReceived(LogMessage message)
+        public static Task LogAsync(LogMessage log)
         {
-            Console.WriteLine(message.ToString());
+            Console.WriteLine(log.ToString());
             return Task.CompletedTask;
         }
     }

@@ -1,11 +1,18 @@
-﻿using DiscordBot;
+﻿using Discord.Interactions;
+using Discord.WebSocket;
+using Discord;
+using DiscordBot;
+using Microsoft.Extensions.Configuration;
+using System.Globalization;
+using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Program
+namespace DiscordBot_Study
 {
-    class MainApp
+    public class Program
     {
-        static void Main(string[] args)
-        {
+        public static void Main(string[] args)
+        { 
             new Bot().BotMain().GetAwaiter().GetResult();
         }
     }
