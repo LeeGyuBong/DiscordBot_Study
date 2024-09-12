@@ -19,6 +19,8 @@
 
 # Folder
 DiscordBot_Study/bin/**
+DiscordBot_Study/obj/**
+DiscordBot_Study/.vs/**
 
 # File
 DiscordBot_Study/Config/Config.json
