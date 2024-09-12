@@ -1,11 +1,4 @@
-﻿using Discord.Interactions;
-using Discord.WebSocket;
-using Discord;
-using DiscordBot;
-using Microsoft.Extensions.Configuration;
-using System.Globalization;
-using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
+﻿using DiscordBot;
 
 namespace DiscordBot_Study
 {

@@ -1,14 +1,9 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using DiscordBot;
-using Discord;
+using Microsoft.Extensions.Configuration;
+using System.Reflection;
 
 public class InteractionHandler
 {
@@ -30,6 +25,8 @@ public class InteractionHandler
         _client.Ready += ReadAsync;
         _handler.Log += Bot.LogAsync;
 
+        await _handler.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+
         _client.InteractionCreated += HandleInteraction;
 
         _handler.InteractionExecuted += HandleInteractionExecute;
@@ -42,11 +39,42 @@ public class InteractionHandler
 
     private async Task HandleInteraction(SocketInteraction interaction)
     {
+        try
+        {
+            var context = new SocketInteractionContext(_client, interaction);
 
+            var result = await _handler.ExecuteCommandAsync(context, _services);
+
+            if (!result.IsSuccess)
+            {
+                switch (result.Error)
+                {
+                    case InteractionCommandError.UnmetPrecondition:
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        catch
+        {
+            if (interaction.Type is InteractionType.ApplicationCommand)
+                await interaction.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
+        }
     }
 
-    private async Task HandleInteractionExecute(ICommandInfo commandInfo, IInteractionContext context, IResult result)
+    private Task HandleInteractionExecute(ICommandInfo commandInfo, IInteractionContext context, IResult result)
     {
+        if (!result.IsSuccess)
+            switch (result.Error)
+            {
+                case InteractionCommandError.UnmetPrecondition:
+                    // implement
+                    break;
+                default:
+                    break;
+            }
 
+        return Task.CompletedTask;
     }
 }

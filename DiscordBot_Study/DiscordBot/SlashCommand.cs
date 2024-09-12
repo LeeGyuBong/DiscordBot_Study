@@ -2,11 +2,6 @@
 
 namespace DiscordBot
 {
-    public class IteractionHandler
-    {
-
-    }
-
     public class InteractionModule : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("ping", "live Check")]
